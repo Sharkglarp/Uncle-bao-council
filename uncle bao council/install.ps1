@@ -104,6 +104,8 @@ $shortcut.Save()
 
 Start-Process -FilePath $wscriptPath -ArgumentList "`"$launcherPath`""
 
+#fixed appdata link 26/02/27
+
 Write-Host ""
 Write-Host "Uncle Bao Council installed."
 Write-Host "Install folder: $targetDir"
