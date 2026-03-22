@@ -8,7 +8,7 @@ $sourceDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $targetDir = Join-Path $env:LOCALAPPDATA "OHYEAH\UncleBaoCouncil"
 $startupDir = [Environment]::GetFolderPath("Startup")
 $startupShortcutPath = Join-Path $startupDir "Uncle Bao Council.lnk"
-$wscriptPath = Join-Path $env:WINDIR "System32\wscript.exe"
+$powerShellPath = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
 
 function Set-HiddenSystemFileAttribute {
     param(
@@ -31,6 +31,9 @@ function Set-HiddenSystemFileAttribute {
 $requiredFiles = @(
     "UncleBaoCouncil.ps1",
     "launch.vbs",
+    "launch.cmd",
+    "uninstall.ps1",
+    "uninstall.cmd",
     "council-assets.zip"
 )
 
@@ -92,17 +95,18 @@ Set-HiddenSystemFileAttribute -Path (Join-Path $sourceDir "bao1_480x480.webp")
 Set-HiddenSystemFileAttribute -Path (Join-Path $sourceDir "Flashbang Sound Effect (HD)  How to.mp3")
 Set-HiddenSystemFileAttribute -Path (Join-Path $sourceDir "bao1_480x480.converted.png")
 
-$launcherPath = Join-Path $targetDir "launch.vbs"
+$launcherPath = Join-Path $targetDir "launch.cmd"
+$mainScriptPath = Join-Path $targetDir "UncleBaoCouncil.ps1"
 $wshShell = New-Object -ComObject WScript.Shell
 $shortcut = $wshShell.CreateShortcut($startupShortcutPath)
-$shortcut.TargetPath = $wscriptPath
-$shortcut.Arguments = "`"$launcherPath`" startup"
+$shortcut.TargetPath = $powerShellPath
+$shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -STA -File `"$mainScriptPath`" -StartHidden"
 $shortcut.WorkingDirectory = $targetDir
 $shortcut.IconLocation = "$env:WINDIR\System32\shell32.dll,220"
 $shortcut.Description = "Starts Uncle Bao Council in the background."
 $shortcut.Save()
 
-Start-Process -FilePath $wscriptPath -ArgumentList "`"$launcherPath`""
+Start-Process -FilePath $launcherPath
 
 #fixed appdata link 26/02/27
 
@@ -110,4 +114,4 @@ Write-Host ""
 Write-Host "Uncle Bao Council installed."
 Write-Host "Install folder: $targetDir"
 Write-Host "Startup shortcut: $startupShortcutPath"
-Write-Host "Use uninstall.ps1 to remove it."
+Write-Host "Use uninstall.cmd to remove it."

@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$StartHidden
+    [switch]$StartHidden,
+    [switch]$HideConsole
 )
 
 Set-StrictMode -Version Latest
@@ -11,6 +12,24 @@ try {
     Add-Type -AssemblyName System.Drawing
 } catch {
     throw "This script requires Windows Forms and System.Drawing."
+}
+
+try {
+    Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+
+public static class UncleBaoCouncilNativeMethods {
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetConsoleWindow();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+}
+"@
+} catch {
+    # If native interop fails, the app still runs; only console hiding is skipped.
 }
 
 try {
@@ -93,6 +112,21 @@ function Ensure-AssetsAvailable {
         Expand-Archive -LiteralPath $script:AssetArchivePath -DestinationPath $script:AppDir -Force
     } catch {
         # If extraction fails, runtime checks will safely skip jumpscare rendering.
+    }
+}
+
+function Hide-ConsoleWindow {
+    if (-not $HideConsole) {
+        return
+    }
+
+    try {
+        $consoleWindow = [UncleBaoCouncilNativeMethods]::GetConsoleWindow()
+        if ($consoleWindow -ne [IntPtr]::Zero) {
+            [void][UncleBaoCouncilNativeMethods]::ShowWindow($consoleWindow, 0)
+        }
+    } catch {
+        # Ignore console-hide failures.
     }
 }
 
@@ -604,6 +638,8 @@ $script:NotifyIcon.ShowBalloonTip(
 )
 
 $script:AppContext = New-Object System.Windows.Forms.ApplicationContext
+
+Hide-ConsoleWindow
 
 if (-not $StartHidden) {
     Show-StatusWindow
