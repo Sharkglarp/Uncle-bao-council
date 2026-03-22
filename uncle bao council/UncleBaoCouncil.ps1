@@ -1,3 +1,8 @@
+[CmdletBinding()]
+param(
+    [switch]$StartHidden
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -599,6 +604,10 @@ $script:NotifyIcon.ShowBalloonTip(
 )
 
 $script:AppContext = New-Object System.Windows.Forms.ApplicationContext
+
+if (-not $StartHidden) {
+    Show-StatusWindow
+}
 
 try {
     [System.Windows.Forms.Application]::Run($script:AppContext)
